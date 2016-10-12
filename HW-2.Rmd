@@ -29,10 +29,10 @@ profiles <- read_csv(file="profiles.csv")
 
 Please indicate
 
-* Who you collaborated with:
-* Roughly how much time you spent on this HW so far:
-* The URL of the RPubs published URL [here](https://www.nhl.com/).
-* What gave you the most trouble:
+* Who you collaborated with: Alden Cowap
+* Roughly how much time you spent on this HW so far: 4 hours
+* The URL of the RPubs published URL [http://rpubs.com/egoins/hw2](https://www.nhl.com/).
+* What gave you the most trouble: Figuring out how to use shiny
 * Any comments you have:
 
 
@@ -81,7 +81,7 @@ inc2 <- gIncome %>%
   tally() %>%
   rename("freq" = n) 
 ggplot(data = inc2, aes(x = income, y = freq, fill = sex)) + 
-  geom_bar(stat = "identity", position="dodge") + coord_cartesian(ylim=c(0, 1000))
+  geom_bar(stat = "identity", position="dodge") + coord_cartesian(ylim=c(0, 1000)) +
   xlab("Income") +
   ylab("Frequency") +
   ggtitle("Frequency of Income Bracket for Each Gender")
