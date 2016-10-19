@@ -34,6 +34,7 @@ renderPlot({
   
   ggplot(data=comedies, aes(x=budget, y=rating)) + 
     geom_point() + 
+    scale_x_log10() +
     xlab("Budget") +
     ylab("Rating") +
     ggtitle("Ratings According to Budget for Comedies and Other Movies (Please Select")

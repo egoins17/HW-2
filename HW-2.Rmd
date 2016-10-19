@@ -12,7 +12,9 @@ output:
 ```{r, echo=FALSE, message=FALSE}
 library(ggplot2)
 library(dplyr)
-library(readr) 
+library(readr)
+library(stats)
+library(forcats)
 ```
 
 
@@ -33,7 +35,7 @@ Please indicate
 * Roughly how much time you spent on this HW so far: 4 hours
 * The URL of the RPubs published URL [http://rpubs.com/egoins/hw2](https://www.nhl.com/).
 * What gave you the most trouble: Figuring out how to use shiny
-* Any comments you have:
+* Any comments you have: I really appreciate the advice on the line for women, because I think it helped to elucidate trends in the data. 
 
 
 
@@ -50,80 +52,97 @@ all keeping in mind in HW-3, you will be fitting a logistic regression to
 predict a user's gender based on these variables.
 
 Notes:
-  - INCOME: In the first graph, I have excluded most of the outliers so that you can see that females make, on average, less than men. In the second graph, we can see that men also have a wider distribution of income than females. Also, there are more men in each income bracket, and while some of this may be due to the greater number of males on OkCupid, there are not twice the number of males on the site than females.
-  - JOB EXPLORATION: This graph shows the proportionality of males to females that are in each type of job. Women have the highest proportion of jobs, in medicine/health, clerical/administrative, and education/academia. Men are found mostly in jobs such as science/tech/engieneeering, construction/craftsmanship, and computer/hardware/software. The disparity here aligns with commonly-held beliefs regarding gender roles. Interestingly, although it is almost 50/50 that are unemployed, there is a slightly higher proportion of men who are unemployed. 
-  - SMOKES: I chose to look at smoking because smoking is stigmatized. In addition to showing that a higher proportion of men than women smoke in the first graph, I also looked at the proportion of males and females that did not answer. Men were more likely to not provide an answer.In looking at the frequency of smokers for each gender in the last graph, you can see that the fewest people said "trying to quit". That may be due to some sort of weakness that it displays if you cannot control yourself and stop yourself from smoking if you want to.  
+
+* **INCOME**: In the first graph, I have excluded most of the outliers so that you can see that females make, on average, less than men. Also, as seen in the second graph, the percentage of woman in each graph is less than the percentage of women on OkCupid. This is most extreme in the higher brackets, such as 250000 and 500000. The last graph shows the proportion of males and females who did not respond, and about 80% of the females did not respond to income. A higher proportion of men did respond to the income question, and this may be responsible for the trends seen in graph 2. 
+
+* **JOB EXPLORATION**: This graph shows the proportionality of males to females that are in each type of job. Women have the highest proportion of jobs, in medicine/health, clerical/administrative, and education/academia. Men are found mostly in jobs such as science/tech/engieneeering, construction/craftsmanship, and computer/hardware/software. This is further reinforced by the line showing the proportion of women on OkCupid. The disparity here aligns with commonly-held beliefs regarding gender roles. I included the proportionality of men/women who answered NA, and it seems that a slightly higher proportion of women answered NA relative to their representative proportion in the profiles data set.
+
+* **SMOKES**: I chose to look at smoking as the third variable to compare with gender because smoking is stigmatized. It is also more socially acceptable for men to smoke and use tobacco than women, because it is seen as "unlady like." The first graph shows the proportionality of males/females who answered in each "smokes" category, and women are under-represented in every category except "no," confirming my suspicions that there are fewer women who smoke, or at least who are willing to report that they smoke. I also included a second graph to look at the general distribution of smokers for each sex. I categorized "trying to quit", "when drinking", and "sometimes" as yes because it means that they at least occasionally smoke. This graph shows that, by far, most males and females do not smoke. 
   
 ```{r, echo=TRUE, message=TRUE, warning=TRUE, fig.width=8, fig.height=4.5}
 #INCOME EXPLORATION
 
+females <- profiles %>%
+  mutate(is_female = ifelse(sex=="f", 1, 0)) %>%
+  summarise(percentF = mean(is_female))
+females
+#40.23% of the OkCupid population is female. 
+
 #sex vs. income
 gIncome <- profiles %>%
   select(sex, income) %>% 
-  filter(!is.na(sex)) %>%
-  filter(!is.na(income))
+  filter(!is.na(sex)) 
 
 #bar graph of mean income for male/female (excluding those who didn't answer (-1))
 inc1 <- gIncome %>%
   filter(income != -1) %>%
   group_by(sex)
-ggplot(data = inc1, aes(x = sex,
-                        y = income)) + geom_boxplot() +
+ggplot(data = inc1, aes(x = sex, y = income)) + geom_boxplot() +
   coord_cartesian(ylim=c(0, 250000)) + #excludes a few outliers but helps to see trend
   xlab("Gender") +
   ylab("Income") +
   ggtitle("Income For Each Gender")
 
-#bar graph showing prop of males/females in each category (excluding those who didn't answer (-1))
+#bar graph showing prop of males/females in each category 
 inc2 <- gIncome %>%
   group_by(sex, income) %>%
   filter(income != -1) %>%
   tally() %>%
   rename("freq" = n) 
-ggplot(data = inc2, aes(x = income, y = freq, fill = sex)) + 
-  geom_bar(stat = "identity", position="dodge") + coord_cartesian(ylim=c(0, 1000)) +
+ggplot(data = inc2, aes(x = as.factor(income), y = freq, fill = sex)) + 
+  geom_bar(stat = "identity", position = "fill") +
+  geom_hline(aes(yintercept = 0.4023)) +
+  coord_flip() +
   xlab("Income") +
   ylab("Frequency") +
   ggtitle("Frequency of Income Bracket for Each Gender")
 
+#separate NA graph because so many of them that the other graph was not useful
+inc3 <- gIncome %>%
+  group_by(sex, income) %>%
+  mutate(noanswer = ifelse(income == -1, 1, 0)) %>% 
+  group_by(sex) %>%
+  summarise(prop=mean(noanswer))
+ggplot(data = inc3, aes(x = sex, y = prop)) + geom_bar(stat = "identity") +
+  xlab("Proprotion of Total Males/Females") +
+  ylab("Frequency") +
+ ggtitle("Proportion of Males/Females Who Did Not Respond")
+
 #JOB EXPLORATION
+
 gJob <- profiles %>%
-  select(sex, job) %>%
-  filter(!is.na(job))
-ggplot(data = gJob, aes(x = job, fill = sex)) + geom_bar(position = "fill") + coord_flip() +
+  select(sex, job) 
+ggplot(data = gJob, aes(x = as.factor(job), fill = sex)) + geom_bar(position = "fill") +
+  coord_flip() +
+  geom_hline(aes(yintercept = 0.4023)) +
   xlab("Proportion of Males/Females") +
   ylab("Job") +
   ggtitle("Proportion of Males/Females in Various Job Categories")
 
 #SMOKES EXPLORATION
-gSmokes <- profiles %>%
-  select(smokes, sex) %>%
-  filter(!is.na(smokes)) 
-ggplot(data = gSmokes, aes(x = smokes, fill = sex)) + geom_bar(position = "fill") + coord_flip() + 
+gSmokes <- profiles %>% select(smokes, sex)
+ggplot(data = gSmokes, aes(x=as.factor(smokes), fill = sex)) + geom_bar(position = "fill") + 
+  coord_flip() + 
+  geom_hline(aes(yintercept = 0.4023)) +
   xlab("Proprotion of Males/Females") +
   ylab("Smoking Status") +
   ggtitle("Proportion of Males/Females Who Smoke")
 
-gNASmokes <- profiles %>%
-  select(smokes, sex) %>%
-  mutate(noanswer = ifelse(is.na(smokes), TRUE, FALSE)) %>% 
-  group_by(sex) %>%
-  summarise(prop=mean(noanswer))
-ggplot(data = gNASmokes, aes(x = sex, y = prop)) + geom_bar(stat = "identity") +
-  xlab("Proprotion of Males/Females") +
-  ylab("Frequency") +
-  ggtitle("Proportion of Males/Females Who Did Not Respond")
-
 gSmokeCount <- profiles %>%
   select(smokes, sex) %>%
-  filter(!is.na(smokes)) %>%
-  group_by(sex, smokes) %>%
+  mutate(smokes = fct_recode(smokes, 
+                             #New name = old name
+                            "yes" = "when drinking",
+                            "yes" = "trying to quit",
+                            "yes" = "sometimes"
+  )) %>%
+  group_by(smokes, sex) %>%
   tally()
-ggplot(data = gSmokeCount, aes(x = smokes, y = n)) + geom_bar(stat = "identity") +  
+ggplot(data = gSmokeCount, aes(x = as.factor(smokes), y = n)) + geom_bar(stat = "identity") +
   facet_wrap(~sex) +
   xlab("Smoking Status") +
   ylab("Frequency") +
-  ggtitle("Proportion of Males/Females Who Smoke")
+  ggtitle("Number of Males/Females Who Smoke")
   
 
 ```
